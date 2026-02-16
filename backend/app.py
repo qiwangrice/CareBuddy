@@ -14,6 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from utils import get_logger
+from tools.parsing_tools import parse_skill_md, parse_all_skill_md, SkillMetadata
 
 from agent_orchestrator import run_orchestrator
 
@@ -272,6 +273,64 @@ async def root():
         "docs": "/docs",
         "health": "/health"
     }
+
+@app.get("/archives/skill")
+async def list_all_archives_skill():
+    """List all SKILL metadata from all archive folders."""
+    try:
+        all_metadata = parse_all_skill_md(OUTPUT_DIR)
+        metadata_list = [
+            {
+                "archive_folder": m.archive_folder,
+                "generated_timestamp": m.generated_timestamp,
+                "total_files": m.total_files,
+                "successfully_processed": m.successfully_processed,
+                "success_rate": m.success_rate,
+                "device_used": m.device_used,
+                "data_type": m.data_type,
+                "model": m.model,
+                "output_files": m.output_files
+            }
+            for m in all_metadata.values()
+        ]
+        log.info(f"Retrieved {len(metadata_list)} archive SKILL metadata")
+        return {
+            "status": "success",
+            "total_archives": len(metadata_list),
+            "archives": sorted(metadata_list, key=lambda x: x["archive_folder"], reverse=True)
+        }
+    except Exception as e:
+        log.error(f"Error listing archives SKILL: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/archives/skill/{archive_name}")
+async def get_archive_skill(archive_name: str):
+    """Get SKILL metadata for a specific archive folder."""
+    try:
+        skill_file = OUTPUT_DIR / archive_name / "SKILL.md"
+        metadata = parse_skill_md(skill_file)
+        
+        if not metadata:
+            raise HTTPException(status_code=404, detail=f"Archive '{archive_name}' not found or invalid")
+        
+        log.info(f"Retrieved SKILL metadata for archive: {archive_name}")
+        return {
+            "status": "success",
+            "archive_folder": metadata.archive_folder,
+            "generated_timestamp": metadata.generated_timestamp,
+            "total_files": metadata.total_files,
+            "successfully_processed": metadata.successfully_processed,
+            "success_rate": metadata.success_rate,
+            "device_used": metadata.device_used,
+            "data_type": metadata.data_type,
+            "model": metadata.model,
+            "output_files": metadata.output_files
+        }
+    except Exception as e:
+        log.error(f"Error getting archive SKILL {archive_name}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 
 if __name__ == "__main__":

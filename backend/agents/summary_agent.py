@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from langchain_core.messages import AIMessage
 import logging as log
-from utils import get_pipeline, INPUT_DIR, OUTPUT_DIR
+from utils import get_pipeline, INPUT_DIR, OUTPUT_DIR, archive_results
 
 def summarize_results(state: dict) -> dict:
     """
@@ -82,8 +82,25 @@ def summarize_results(state: dict) -> dict:
     report_file.write_text(report_text)
     log.info(f"Detailed report saved to: {report_file}")
 
-    state["messages"].append(
-        AIMessage(content=f"Generated comprehensive analysis report.")
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": result},
+                {"type": "text", "text": "summarize the results into a one-sentence description that can be used as the description field in SKILL.md. Focus on the overall insights and key takeaways from the analysis."}
+            ]
+        }
+    ]
+
+    log.info("Generating summary from results.json using the medical model...")
+    
+    output = pipe(text=messages, max_new_tokens=2000)
+
+    # Archive results to timestamped folder with SKILL.md
+    archive_results(
+        total_files=summary_data['total_files'],
+        processed_files=summary_data['processed_files'],
+        description=output[0]["generated_text"][-1]["content"]
     )
 
     return state
