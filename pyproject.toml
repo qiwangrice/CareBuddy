@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "carebuddy"
+version = "0.1.0"
+description = "CareBuddy project"
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.9,<4.0"
+transformers = "^4.40.0"
+requests = "^2.31.0"
+Pillow = "^10.0.0"
+langgraph = "^0.0.64"
+langchain-core = "^0.2.0"
+fastapi = "^0.104.1"
+uvicorn = "^0.24.0"
+python-multipart = "^0.0.6"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
