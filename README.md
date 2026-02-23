@@ -9,10 +9,9 @@ CareBuddy is a sophisticated multi-agent medical image and EHR (Electronic Healt
 - **FastAPI Backend**: RESTful API for processing and result management
 - **Modern Web UI**: Beautiful, responsive interface for easy interaction
 
-## Demo Video
+## 🎬 Demo Video
 
-https://www.youtube.com/watch?v=h8AVXXA1_YU
-
+Watch the CareBuddy system in action: https://www.youtube.com/watch?v=h8AVXXA1_YU
 
 ## ✨ Features
 
@@ -225,9 +224,6 @@ This minimizes context usage while maintaining sufficient information for analys
 
 Check [FRONTEND_SETUP.md](./FRONTEND_SETUP.md) for troubleshooting and detailed guides.
 
-## 🎬 Demo Video
-
-Watch the CareBuddy system in action: https://www.youtube.com/watch?v=h8AVXXA1_YU
 
 ---
 
