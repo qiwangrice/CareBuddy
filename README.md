@@ -220,6 +220,8 @@ This minimizes context usage while maintaining sufficient information for analys
 
 Check [FRONTEND_SETUP.md](./FRONTEND_SETUP.md) for troubleshooting and detailed guides.
 
+## Demo Video
+
 ---
 
 **Made with ❤️ for better healthcare through AI**
