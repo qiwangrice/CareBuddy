@@ -62,7 +62,7 @@ def summarize_results(state: dict) -> dict:
 
     log.info("Generating summary from results.json using the medical model...")
     
-    output = pipe(text=messages, max_new_tokens=2000)
+    output = pipe(text=messages, max_new_tokens=20000)
     result = output[0]["generated_text"][-1]["content"]
 
     report_lines.append(f"\n{result}\n")
@@ -87,12 +87,12 @@ def summarize_results(state: dict) -> dict:
             "role": "user",
             "content": [
                 {"type": "text", "text": result},
-                {"type": "text", "text": "summarize the results into a one-sentence description that can be used as the description field in SKILL.md. Focus on the overall insights and key takeaways from the analysis."}
+                {"type": "text", "text": "summarize the results into a one-sentence description that can be used as the description field in SKILL.md. Focus on the overall insights and key takeaways from the analysis. only output the one-sentence summary without any additional text or explanation."}
             ]
         }
     ]
 
-    log.info("Generating summary from results.json using the medical model...")
+    log.info("Generating summary from results.json using the medical model for SKILL.md")
     
     output = pipe(text=messages, max_new_tokens=2000)
 

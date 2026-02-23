@@ -20,7 +20,8 @@ class SkillMetadata:
     output_files: List[str]
     
     def __str__(self) -> str:
-        return f"SkillMetadata(archive={self.archive_folder}, success_rate={self.success_rate:.1f}%)"
+        rate_str = f"{self.success_rate:.1f}%" if self.success_rate is not None else "N/A"
+        return f"SkillMetadata(archive={self.archive_folder}, success_rate={rate_str})"
 
 def parse_skill_md(skill_md_path: Path) -> Optional[SkillMetadata]:
     """
@@ -34,52 +35,40 @@ def parse_skill_md(skill_md_path: Path) -> Optional[SkillMetadata]:
     """
     if not skill_md_path.exists():
         return None
-    
-    content = skill_md_path.read_text()
-    
-    try:
-        name = re.search(r"name:\s*(.+)", content).group(1).strip()
-        description = re.search(r"description:\s*(.+)", content).group(1).strip()
-        # Extract archive folder name from file path
-        archive_folder = skill_md_path.parent.name
-        
-        # Extract Generated timestamp
-        timestamp_match = re.search(r"Generated:\s*(.+)", content)
-        generated_timestamp = timestamp_match.group(1).strip() if timestamp_match else "Unknown"
-        
-        # Extract Processing Statistics
-        total_files_match = re.search(r"Total Files:\s*(\d+)", content)
-        total_files = int(total_files_match.group(1)) if total_files_match else 0
-        
-        processed_match = re.search(r"Successfully Processed:\s*(\d+)", content)
-        successfully_processed = int(processed_match.group(1)) if processed_match else 0
-        
-        success_rate_match = re.search(r"Success Rate:\s*([\d.]+)%", content)
-        success_rate = float(success_rate_match.group(1)) if success_rate_match else 0.0
-        
-        # Extract System Information
-        device_match = re.search(r"Device Used:\s*(.+)", content)
-        device_used = device_match.group(1).strip() if device_match else "Unknown"
-        
-        dtype_match = re.search(r"Data Type:\s*(.+)", content)
-        data_type = dtype_match.group(1).strip() if dtype_match else "Unknown"
-        
-        model_match = re.search(r"Model:\s*(.+)", content)
-        model = model_match.group(1).strip() if model_match else "Unknown"
-        
-        # Extract Output Files
-        output_files = []
-        files_section = re.search(r"Output Files\n((?:- `.+?`\n?)*)", content)
-        if files_section:
-            file_lines = files_section.group(1).splitlines()
-            output_files = [
-                line.replace("- `", "").replace("`", "").strip() 
-                for line in file_lines if line.strip().startswith("-")
-            ]
-        
-        return SkillMetadata(
-            name=name,
-            description=description,
+
+    name = description = archive_folder = generated_timestamp = device_used = data_type = model = success_rate = total_files = successfully_processed = None
+    tab= ": "
+    file1 = open(skill_md_path, 'r')
+    for line in file1:
+        line = line.strip()
+        tmp = line.strip().split(tab)
+        if len(tmp) < 2:
+            continue  # Skip lines that don't have the expected format
+        if tmp[0].startswith("name"):
+            name = tmp[1]
+        elif tmp[0].startswith("description"):
+            description = tmp[1].strip()
+        elif "Archive Folder" in line:
+            archive_folder = tmp[1].strip()
+        elif "Generated" in line:
+            generated_timestamp = tmp[1].strip()
+        elif "Total Files" in line:
+            total_files = int(tmp[1])
+        elif "Successfully Processed" in line:
+            successfully_processed = int(tmp[1])
+        elif "Success Rate" in line:
+            success_rate = float(tmp[1].replace("%", ""))
+        elif "Device Used" in line:
+            device_used = tmp[1].strip()
+        elif "Data Type" in line:
+            data_type = tmp[1].strip()
+        elif "Model" in line:
+            model = tmp[1].strip()
+    success_rate_str = f"{success_rate:.1f}%" if success_rate is not None else "N/A"
+
+    return SkillMetadata(
+        name=name,
+        description=description,
             archive_folder=archive_folder,
             generated_timestamp=generated_timestamp,
             total_files=total_files,
@@ -88,12 +77,8 @@ def parse_skill_md(skill_md_path: Path) -> Optional[SkillMetadata]:
             device_used=device_used,
             data_type=data_type,
             model=model,
-            output_files=output_files
+            output_files=['results.json', 'analysis_report.txt'] # default
         )
-    
-    except Exception as e:
-        print(f"Error parsing SKILL.md at {skill_md_path}: {e}")
-        return None
 
 def parse_all_skill_md(output_dir: Path) -> Dict[str, SkillMetadata]:
     """

@@ -1,11 +1,11 @@
 ---
-name: clinical history 2026-02-15_17-34-18
-description: The patient presents a complex case with a history of pancreatic cancer requiring a Whipple procedure, leading to chronic complications like secondary pancreatitis and bile duct stricture, necessitating ongoing management of diabetes and pancreatic insufficiency, and requiring continued surveillance for potential recurrence.
+name: clinical history 2026-02-22_21-05-43
+description: The patient, a 20-year-old male with a history of Whipple procedure for low-grade pancreatic neoplasm, currently manages pancreatic insufficiency and type 1 diabetes, and has a cyst identified on CT scan, requiring ongoing monitoring.
 ---
 
 ## Processing Metadata
-- **Generated**: 2026-02-15 17:34:18
-- **Archive Folder**: 2026-02-15_17-34-18
+- **Generated**: 2026-02-22 21:05:43
+- **Archive Folder**: 2026-02-22_21-05-43
 
 ## Processing Statistics
 - **Total Files**: 4
