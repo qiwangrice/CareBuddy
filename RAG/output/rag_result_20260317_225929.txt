@@ -1,0 +1,40 @@
+================================================================================
+RAG (Retrieval-Augmented Generation) Result
+================================================================================
+
+CONFIGURATION
+--------------------------------------------------------------------------------
+Timestamp: 20260317_225929
+Embedding Model: all-MiniLM-L6-v2
+Generation Model: orca-mini-3b-gguf2-q4_0
+Vector Database: FAISS (IndexFlatL2)
+Max Tokens: 300
+Temperature: 0.1
+Use Retrieval: Yes
+Retrieved Chunks: 2
+
+QUERY
+--------------------------------------------------------------------------------
+How does CRISPR work?
+
+RETRIEVED CONTEXT
+--------------------------------------------------------------------------------
+CRISPR-Cas9 is a genome editing tool that allows precise DNA modification.
+The PCR technique amplifies DNA sequences using thermal cycling.
+
+GENERATED ANSWER
+--------------------------------------------------------------------------------
+To answer this question, we need to look at the context and understand what CRISPR-Cas9 is and how it works.
+According to the context, CRISPR-Cas9 is a genome editing tool that allows precise DNA modification.
+It uses a protein called Cas9, which has two cutting sites (NGG and Sna), to cut DNA at specific locations.
+The guide RNA (gRNA) sequence specifies the location of the cut site, and the Cas9 protein cuts the DNA at that location.
+This allows scientists to modify or repair genes in living organisms.
+PCR is a technique used for amplifying DNA sequences using thermal cycling.
+It involves heating the DNA sample at different temperatures and then cooling it down to stop the cycle.
+The process of PCR involves denaturation, annealing, and extension of the DNA molecule.
+During this process, primers are added to the DNA sample that target specific regions of the genome.
+These primers help to amplify the DNA sequence of interest, allowing scientists to detect and analyze it more accurately.
+In summary, CRISPR-Cas9 works by using a protein called Cas9 with two cutting sites (NGG and Sna) to cut DNA at specific locations specified by guide RNA (gRNA) sequences.
+The process of PCR amplifies the DNA sequence of interest, allowing scientists to detect and analyze it more accurately.
+
+================================================================================

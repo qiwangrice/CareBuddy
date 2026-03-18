@@ -1,0 +1,32 @@
+================================================================================
+RAG (Retrieval-Augmented Generation) Result
+================================================================================
+
+CONFIGURATION
+--------------------------------------------------------------------------------
+Timestamp: 20260317_225854
+Embedding Model: all-MiniLM-L6-v2
+Generation Model: orca-mini-3b-gguf2-q4_0
+Vector Database: FAISS (IndexFlatL2)
+Max Tokens: 300
+Temperature: 1
+Use Retrieval: Yes
+Retrieved Chunks: 2
+
+QUERY
+--------------------------------------------------------------------------------
+How does CRISPR work?
+
+RETRIEVED CONTEXT
+--------------------------------------------------------------------------------
+CRISPR-Cas9 is a genome editing tool that allows precise DNA modification.
+The PCR technique amplifies DNA sequences using thermal cycling.
+
+GENERATED ANSWER
+--------------------------------------------------------------------------------
+To answer this question, we need to refer to the context and understand the specific details mentioned there.
+According to the context, CRISPR-Cas9 works by using a guide RNA (gRNA) that is designed to target a specific DNA sequence.
+The Cas9 protein then cuts the DNA at the location of the gRNA, allowing for insertion or deletion of the desired DNA sequence.
+This process can be repeated multiple times to create a precise and targeted genome editing tool.
+
+================================================================================
