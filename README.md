@@ -54,7 +54,7 @@ Watch the CareBuddy system in action: https://www.youtube.com/watch?v=h8AVXXA1_Y
 
 ### 1. Install Dependencies
 ```bash
-cd /Users/qiwang/Downloads/workplace/CareBuddy
+cd CareBuddy
 poetry install --no-root
 poetry lock
 ```

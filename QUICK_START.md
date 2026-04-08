@@ -4,17 +4,13 @@
 
 ```bash
 # 1. Navigate to CareBuddy
-cd /Users/qiwang/Downloads/workplace/CareBuddy
+cd CareBuddy
 
 # 2. Start Neo4j
 ./neo4j.sh start
 
-# 3. Wait for startup (~10 seconds) then load TTL files
-./load_ttl.py load
-
-# 4. View data in browser
+# 3. View data in browser
 ./neo4j.sh open
-# Login: neo4j / carebuddy_password
 ```
 
 ---
@@ -41,7 +37,6 @@ cd /Users/qiwang/Downloads/workplace/CareBuddy
 | Connection refused | Run `./neo4j.sh start` and wait 10s |
 | Port already in use | `./neo4j.sh reset` or `lsof -i :7687` |
 | Slow data loading | Increase memory in docker-compose.yml |
-| Out of memory | Reduce TTL file size or increase heap |
 
 ---
 
@@ -51,7 +46,6 @@ cd /Users/qiwang/Downloads/workplace/CareBuddy
 CareBuddy/
 ├── docker-compose.yml         ← Neo4j container config
 ├── neo4j.sh                   ← Management script
-├── load_ttl.py               ← TTL loading script
 ├── NEO4J_STARTUP_GUIDE.md    ← Full documentation
 ├── resources/
 │   └── ddss.xrdf             ← Bring your own database 

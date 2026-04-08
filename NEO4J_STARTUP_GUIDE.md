@@ -5,7 +5,6 @@ Quick start guide for running Neo4j with CareBuddy and loading RDF/Turtle files.
 ## Prerequisites
 
 - Docker and Docker Compose installed
-- TTL files in `resources/` or `KAG/` directory
 - Python environment with neo4j and rdflib installed
 
 ## Quick Start
@@ -13,7 +12,7 @@ Quick start guide for running Neo4j with CareBuddy and loading RDF/Turtle files.
 ### 1. Start Neo4j Container
 
 ```bash
-cd /Users/qiwang/Downloads/workplace/CareBuddy
+cd CareBuddy
 
 # Using the management script
 ./neo4j.sh start
@@ -30,59 +29,10 @@ docker-compose up -d neo4j
 
 # Visit browser interface
 ./neo4j.sh open
-# Or manually: http://localhost:7474
-# Login: neo4j / carebuddy_password
 ```
 
-### 3. Load TTL Files into Neo4j
-
-```bash
-# From CareBuddy directory
-cd /Users/qiwang/Downloads/workplace/CareBuddy
-
-# Option A: Load specific TTL file
-python KAG/ttl_to_neo4j.py
-
-# Option B: Load from Python (advanced)
-python << 'EOF'
-from KAG.ttl_to_neo4j import TTLToNeo4jLoader
-
-loader = TTLToNeo4jLoader(
-    neo4j_uri="bolt://localhost:7687",
-    neo4j_user="neo4j",
-    neo4j_password="carebuddy_password"
-)
-
-# Load a TTL file
-loader.load_ttl("path/to/your/file.ttl")
-
-# Get statistics
-stats = loader.get_statistics()
-print(f"Loaded {stats['nodes']} nodes and {stats['relationships']} relationships")
-EOF
-```
 
 ### 4. Query Data
-
-```bash
-# Test connection and query
-python << 'EOF'
-from KAG.ttl_to_neo4j import TTLToNeo4jLoader
-
-loader = TTLToNeo4jLoader()
-loader.connect()
-
-# Search for a term
-results = loader.search_by_label("DNA")
-print(f"Found {len(results)} results containing 'DNA'")
-
-# Get neighbors of a node
-neighbors = loader.get_neighbors("node_id", hops=2)
-print(f"Found {len(neighbors)} neighbors")
-
-loader.close()
-EOF
-```
 
 ## Management Commands
 
@@ -100,14 +50,6 @@ Use the `neo4j.sh` script for common operations:
 ```
 
 ## Configuration
-
-### Connection Details
-
-- **Browser URL**: http://localhost:7474
-- **Bolt Protocol**: bolt://localhost:7687
-- **Default Credentials**: 
-  - Username: `neo4j`
-  - Password: `carebuddy_password`
 
 ### Customize Credentials
 
@@ -134,36 +76,6 @@ To increase, edit:
 environment:
   NEO4J_dbms_memory_heap_initial__size: 4G
   NEO4J_dbms_memory_heap_max__size: 8G
-```
-
-## TTL File Locations
-
-### Available TTL Files
-
-1. **GO Ontology** (Gene Ontology)
-   - Generated from: `go-basic.json`
-   - File: `resources/go-basic.ttl` (2.62 MB)
-   - Contains: 52,003 GO terms with relationships
-
-2. **MESH Sample**
-   - File: `resources/MESH_sample.ttl`
-   - Contains: 16 medical descriptors for testing
-
-### Generate New TTL Files
-
-```bash
-cd /Users/qiwang/Downloads/workplace/discovery-agent
-
-# Generate from utilities
-python << 'EOF'
-from knowledge_query.ttl_utils import create_sample_mesh_ttl, convert_go_json_to_ttl
-
-# Create MESH sample
-create_sample_mesh_ttl("output_path.ttl")
-
-# Convert GO JSON to TTL (limit to 5000 terms for faster processing)
-convert_go_json_to_ttl("resources/go-basic.json", max_terms=5000)
-EOF
 ```
 
 ## Troubleshooting
@@ -205,26 +117,6 @@ NEO4J_dbms_memory_heap_max__size: 8G
 ./neo4j.sh restart
 ```
 
-### TTL File Won't Load
-
-```bash
-# Verify file exists and is readable
-ls -lh resources/*.ttl
-
-# Check TTL file syntax (first few lines)
-head -20 resources/go-basic.ttl
-
-# Enable debug logging
-python << 'EOF'
-import logging
-logging.basicConfig(level=logging.DEBUG)
-
-from KAG.ttl_to_neo4j import TTLToNeo4jLoader
-loader = TTLToNeo4jLoader()
-loader.load_ttl("resources/go-basic.ttl")
-EOF
-```
-
 ### Clear All Data
 
 ```bash
@@ -242,65 +134,6 @@ EOF
 ```python
 # Adjust batch size in ttl_to_neo4j.py
 BATCH_SIZE = 5000  # Larger batches = faster loading (higher memory)
-```
-
-## Integration with BackendAPI
-
-```python
-# In backend API endpoint
-from KAG.ttl_to_neo4j import TTLToNeo4jLoader
-
-# Create singleton for connection pooling
-neo4j_loader = TTLToNeo4jLoader(
-    neo4j_uri="bolt://localhost:7687",
-    neo4j_user="neo4j",
-    neo4j_password="carebuddy_password"
-)
-
-# Use in endpoint
-@app.get("/api/search")
-async def search_graph(query: str):
-    results = neo4j_loader.search_by_label(query)
-    return {"results": results}
-```
-
-## Advanced Usage
-
-### Run Cypher Queries Directly
-
-```python
-from KAG.ttl_to_neo4j import TTLToNeo4jLoader
-
-loader = TTLToNeo4jLoader()
-loader.connect()
-
-# Count all nodes
-result = loader.query("MATCH (n) RETURN count(n) as count")
-
-# Find all relationships
-result = loader.query("""
-    MATCH (n1)-[r]->(n2)
-    RETURN type(r) as relationship, count(*) as count
-    ORDER BY count DESC
-""")
-
-loader.close()
-```
-
-### Export Data
-
-```python
-loader = TTLToNeo4jLoader()
-loader.connect()
-
-# Export statistics
-loader.export_to_file("neo4j_stats.json")
-
-# Export query results
-result = loader.query("MATCH (n) RETURN n LIMIT 1000")
-# Result can be saved to JSON/CSV as needed
-
-loader.close()
 ```
 
 ## Monitoring
@@ -329,7 +162,7 @@ CALL dbms.info()   # Database info
 ### Stop All Services
 
 ```bash
-cd /Users/qiwang/Downloads/workplace/CareBuddy
+cd CareBuddy
 docker-compose down
 ```
 

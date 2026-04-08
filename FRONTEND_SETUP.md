@@ -21,7 +21,7 @@ CareBuddy/
 ### Option 1: Automated Setup (Linux/macOS)
 
 ```bash
-cd /Users/qiwang/Downloads/workplace/CareBuddy
+cd CareBuddy
 
 # Make run.sh executable
 chmod +x run.sh
@@ -34,7 +34,7 @@ chmod +x run.sh
 
 **Terminal 1 - Start Backend API:**
 ```bash
-cd /Users/qiwang/Downloads/workplace/CareBuddy
+cd CareBuddy
 poetry install --no-root
 poetry lock
 
@@ -45,7 +45,7 @@ poetry run python -m uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 
 **Terminal 2 - Start Frontend Server:**
 ```bash
-cd /Users/qiwang/Downloads/workplace/CareBuddy/frontend
+cd CareBuddy/frontend
 python -m http.server 8080
 ```
 
