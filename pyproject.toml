@@ -20,9 +20,24 @@ sentence-transformers = "<5.0.0"
 openai = "^2.29.0"
 tiktoken = "^0.12.0"
 urllib3 = "<2.0"
+numpy = "^1.26.0"
 gpt4all = "^2.8.2"
+networkx = "<3"
+matplotlib = "<3.9"
+pypdf = "^6.9.1"
+pdfplumber = "<0.11"
+openpyxl = "^3.1.5"
+reportlab = "^4.4.10"
+neo4j = "^5.0"
+python-docx = "^1.2.0"
+rdflib = "^7.6.0"
+python-dotenv = "^1.0.0"
+tabulate = "^0.9.0"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+pytest-cov = "^4.1.0"
+pytest-mock = "^3.12.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

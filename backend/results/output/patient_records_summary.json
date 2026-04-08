@@ -1,6 +1,13 @@
 {
-  "total_files": 2,
-  "processed_files": 2,
+  "total_files_processed": 2,
+  "total_symptoms_extracted": 4,
+  "total_diagnoses_extracted": 6,
+  "symptom_disease_associations": {
+    "Abdominal pain (low abdomen, crampy, 4 hours duration, resolved)": [],
+    "No symptoms explicitly mentioned in the image.": [],
+    "Tinnitus": [],
+    "Epigastric pain": []
+  },
   "detailed_results": {
     "EHR_record.txt": {
       "patient_id": "P0012345",
@@ -47,11 +54,5 @@
         "Large cystic lesion in the left upper quadrant, likely a cyst or mass."
       ]
     }
-  },
-  "symptom_disease_associations": {
-    "Abdominal pain (low abdomen, crampy, 4 hours duration, resolved)": [],
-    "No symptoms explicitly mentioned in the image.": [],
-    "Tinnitus": [],
-    "Epigastric pain": []
   }
 }

@@ -139,6 +139,12 @@ CareBuddy/
 ├── frontend/
 │   ├── index.html               # Single-page app
 │   └── styles/
+├── KAG/
+│   ├── ddss.xrdf              # Disease-Ontology/Symptom-Ontology RDF file
+│   ├── build_disease_symptom_graph.py  # Parse RDF & load Disease-Symptom graph to Neo4j
+│   ├── search_neo4j.py        # Search Disease-Symptom graph in Neo4j
+│   └── database/
+│       └── disease_symptom_graph.json  # Exported disease-symptom relationships
 ├── results/
 │   ├── input/                   # Upload directory
 │   └── output/                  # Archives & current results
@@ -152,10 +158,83 @@ CareBuddy/
 └── pyproject.toml
 ```
 
+## 🧬 Knowledge Graph (KAG) - Disease-Symptom Database
+
+CareBuddy includes a comprehensive Disease-Symptom knowledge graph built from the Disease Ontology (DOID) and Symptom Ontology (SYMP), loaded into Neo4j for efficient querying.
+
+### Graph Statistics
+- **~12,000+** Disease-Symptom relationships
+- **~8,800** Unique diseases (DOID_*)
+- **~21,800** Unique symptoms (SYMP_*)
+- **Cross-references**: ICD9, UMLS CUI, and more
+
+### Graph Tools
+
+#### 1. Build Disease-Symptom Graph
+Parse the RDF ontology and load relationships into Neo4j.
+
+```bash
+# Load graph (parse ddss.xrdf and populate Neo4j)
+python KAG/build_disease_symptom_graph.py
+
+# Parse only, don't load (see statistics)
+python KAG/build_disease_symptom_graph.py --dry-run
+
+# Clear existing graph before loading
+python KAG/build_disease_symptom_graph.py --clear
+
+# Export extracted data to JSON
+python KAG/build_disease_symptom_graph.py --export-json
+```
+
+#### 2. Search the Graph
+Query diseases and symptoms interactively.
+
+```bash
+# Find diseases with a specific symptom
+python KAG/search_neo4j.py --symptom "fever" --limit 20
+
+# Find all symptoms for a disease
+python KAG/search_neo4j.py --disease "angiosarcoma" --limit 10
+
+# Find related diseases (sharing symptoms)
+python KAG/search_neo4j.py --related-to DOID_0001816 --limit 15
+
+# Get full disease details with all symptoms
+python KAG/search_neo4j.py --detail-disease "angiosarcoma"
+
+# Get full symptom details with all associated diseases
+python KAG/search_neo4j.py --detail-symptom "fever"
+
+# View graph statistics
+python KAG/search_neo4j.py --stats
+```
+
+### Query Examples
+
+**Find all diseases with symptom "fever":**
+```bash
+python KAG/search_neo4j.py --symptom "fever"
+```
+
+**Get comprehensive disease profile:**
+```bash
+python KAG/search_neo4j.py --detail-disease "angiosarcoma"
+```
+
+### Integration with Medical Analysis
+
+The Disease-Symptom graph is automatically queried during EHR analysis to:
+- **Validate extracted conditions** against known disease-symptom patterns
+- **Suggest related diseases** when symptoms align with multiple conditions
+- **Cross-reference** findings with standardized medical ontologies (ICD9, UMLS)
+- **Identify symptom clusters** indicating complex conditions
+
 ## 📚 Documentation
 
 - [Frontend Setup Guide](./FRONTEND_SETUP.md) - Detailed UI setup and usage
 - [Poetry Installation](./POETRY_INSTALL.md) - Dependency management
+- [Neo4j Setup Guide](./NEO4J_STARTUP_GUIDE.md) - Database configuration
 - [API Documentation](http://localhost:8000/docs) - Interactive Swagger UI
 
 ### Key API Endpoints

@@ -4,11 +4,161 @@ Processing Agent: Routes and processes individual files (images or EHR records) 
 
 import json
 from pathlib import Path
+from typing import Union
 from PIL import Image
 from langchain_core.messages import AIMessage
 from utils import get_pipeline, INPUT_DIR, OUTPUT_DIR
 from tools.parsing_tools import parse_skill_md
 import logging as log
+import pydantic
+from pydantic import Field
+import re
+
+def deduplicate_critical_info(info_list: list[str]) -> list[str]:
+    """
+    Deduplicate critical info items using a more robust approach.
+    
+    This function normalizes the text by:
+    - Stripping whitespace
+    - Converting to lowercase for comparison
+    - Removing common prefixes like "History of"
+    - Removing punctuation for comparison
+    
+    Args:
+        info_list: List of critical info strings (potentially with duplicates)
+    Returns:
+        List of unique critical info strings, preserving original formatting of the first occurrence.
+    """
+    seen = set()
+    deduplicated = []
+    
+    for item in info_list:
+        normalized = item.strip().lower()
+        normalized = re.sub(r'^(history of|history, of)\s+', '', normalized)  # Remove "History of" prefix
+        normalized = re.sub(r'[^\w\s]', '', normalized)  # Remove punctuation
+        
+        if normalized not in seen:
+            seen.add(normalized)
+            deduplicated.append(item.strip())
+    
+    return deduplicated
+
+def save_patient_record_to_json(patient_record: dict, filename: str = None) -> Path:
+    """
+    Save a patient record to a JSON file in OUTPUT_DIR.
+    
+    Args:
+        patient_record: Dictionary containing patient data
+        filename: Optional filename (default: <patient_id>.json)
+        
+    Returns:
+        Path to the saved JSON file
+    """
+    if filename is None:
+        patient_id = patient_record.get("patient_id", "UNKNOWN")
+        filename = f"{patient_id}.json"
+    
+    # Clean and normalize the record before saving
+    cleaned_record = clean_patient_record(patient_record)
+    
+    output_file = OUTPUT_DIR / filename
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    
+    with open(output_file, 'w') as f:
+        json.dump(cleaned_record, f, indent=2, ensure_ascii=False)
+    
+    log.info(f"✓ Saved patient record to: {output_file}")
+    log.info(f"  - Contains {len(cleaned_record.get('symptoms', []))} unique symptoms")
+    log.info(f"  - Contains {len(cleaned_record.get('critical_info', []))} unique critical items")
+    
+    return output_file
+
+
+def clean_patient_record(patient_record: dict) -> dict:
+    """
+    Clean and normalize a patient record before saving.
+    
+    Performs:
+    - Deduplication of all list fields
+    - Removal of empty strings
+    - Trimming of whitespace
+    - Case normalization where appropriate
+    
+    Args:
+        patient_record: Raw patient record dictionary
+        
+    Returns:
+        Cleaned patient record dictionary
+    """
+    cleaned = {}
+    
+    # Simple string fields
+    for field in ["patient_id", "name"]:
+        value = patient_record.get(field, "")
+        cleaned[field] = str(value).strip() if value else ""
+    
+    # List fields with deduplication
+    for field in ["symptoms", "diagnoses", "medications", "critical_info"]:
+        raw_list = patient_record.get(field, [])
+        if not isinstance(raw_list, list):
+            raw_list = [raw_list]
+        
+        # Filter empty items and strip whitespace
+        cleaned_items = [str(item).strip() for item in raw_list if item and str(item).strip()]
+        
+        # Deduplicate
+        if field == "critical_info":
+            cleaned[field] = deduplicate_critical_info(cleaned_items)
+        else:
+            # For other lists, use simple deduplication preserving order
+            seen = set()
+            deduplicated = []
+            for item in cleaned_items:
+                normalized = item.lower()
+                if normalized not in seen:
+                    seen.add(normalized)
+                    deduplicated.append(item)
+            cleaned[field] = deduplicated
+    
+    return cleaned
+
+
+def export_batch_results(results: dict, batch_filename: str = "patient_records.json") -> Path:
+    """
+    Export all patient records from a batch of file processing to a single JSON file.
+    
+    Args:
+        results: Dictionary of filename -> patient_record mappings
+        batch_filename: Name of the output batch file
+        
+    Returns:
+        Path to the saved batch JSON file
+    """
+    output_file = OUTPUT_DIR / batch_filename
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    
+    # Aggregate results with metadata
+    batch_data = {
+        "total_records": len(results),
+        "records": results,
+        "export_timestamp": str(Path.ctime(Path.cwd()))
+    }
+    
+    with open(output_file, 'w') as f:
+        json.dump(batch_data, f, indent=2)
+    
+    log.info(f"✓ Exported batch results to: {output_file}")
+    log.info(f"  - Total records: {batch_data['total_records']}")
+    return output_file
+
+class PatientRecord(pydantic.BaseModel):
+    """Structured representation of a patient's medical record."""
+    patient_id: str = Field(default_factory=lambda: "UNKNOWN")
+    name: str = Field(default_factory=lambda: "")  # Optional name field, can be empty
+    symptoms: list[str]
+    diagnoses: list[str]
+    medications: list[str]
+    critical_info: list[str]
 
 
 def process_file_worker(state: dict) -> dict:
@@ -177,14 +327,25 @@ def process_archive_folder(archive_name: str) -> str:
 
 
 
-def process_image_file(filepath: Path) -> str:
-    """Analyze image using the medical model."""
+def process_image_file(filepath: Path) -> Union[PatientRecord, dict]:
+    """Analyze medical image and extract findings into PatientRecord format."""
     pipe = get_pipeline()
     
     log.info(f"Loading image: {filepath}")
     image = Image.open(filepath)
 
-    prompt = "Describe the image type and any abnormalities you see."
+    prompt = """Analyze this medical image and structure the findings into JSON format:
+    {
+        "patient_id": "IMAGE_<filename>",
+        "name": "Image Analysis Result",
+        "symptoms": ["list of clinical signs/symptoms observed"],
+        "diagnoses": ["list of potential diagnoses or pathologies identified"],
+        "medications": ["list of recommended treatments or interventions"],
+        "critical_info": ["list of critical findings, alerts, or abnormalities"]
+    }
+    
+    Return ONLY valid JSON, no other text.
+    Include confidence levels or severity where relevant in the descriptions."""
     log.info("Analyzing image with model...")
 
     messages = [
@@ -197,21 +358,111 @@ def process_image_file(filepath: Path) -> str:
         }
     ]
 
-    output = pipe(text=messages, max_new_tokens=2000)
-    result = output[0]["generated_text"][-1]["content"]
+    output = pipe(text=messages, max_new_tokens=2000,response_format=PatientRecord.schema())
+    result_text = output[0]["generated_text"][-1]["content"]
+    print("Model output for image analysis:", result_text)
+    cleaned_result_text = clean_llm_json_output(result_text)
+    print("Cleaned JSON text for parsing:", cleaned_result_text)
 
-    log.info("Image analysis complete.")
-    return result
+    log.info("Image analysis complete. Parsing into PatientRecord format...")
+    
+    try:
+        # Parse JSON output from model using robust parser
+        result_data = json.loads(cleaned_result_text)
+        
+        if not result_data:
+            raise ValueError("JSON parsing returned empty dict")
+        
+        # Deduplicate critical_info
+        critical_info = result_data.get("critical_info", [])
+        if critical_info:
+            critical_info = deduplicate_critical_info(critical_info)
+            result_data["critical_info"] = critical_info
+        
+        # Validate and create PatientRecord
+        patient_record = PatientRecord(
+            patient_id=result_data.get("patient_id", f"IMAGE_{filepath.stem}"),
+            name=result_data.get("name", "Image Analysis"),
+            symptoms=result_data.get("symptoms", []),
+            diagnoses=result_data.get("diagnoses", []),
+            medications=result_data.get("medications", []),
+            critical_info=critical_info
+        )
+        log.info(f"✓ Created PatientRecord from image: {filepath.name}")
+        log.info(f"  - Symptoms: {len(patient_record.symptoms)}")
+        log.info(f"  - Diagnoses: {len(patient_record.diagnoses)}")
+        log.info(f"  - Medications: {len(patient_record.medications)}")
+        log.info(f"  - Critical Info: {len(patient_record.critical_info)}")
+        
+        # Save to JSON file
+        result_dict = patient_record.model_dump()
+        save_patient_record_to_json(result_dict, f"IMAGE_{filepath.stem}.json")
+        
+        return result_dict
+        
+    except (json.JSONDecodeError, ValueError) as e:
+        log.warning(f"Failed to parse model output as JSON: {e}. Attempting fallback extraction...")
+        # Fallback: create record with raw result
+        return PatientRecord(
+            patient_id=f"IMAGE_{filepath.stem}",
+            name="Image Analysis",
+            symptoms=[],
+            diagnoses=[],
+            medications=[],
+            critical_info=[result_text]  # Store raw analysis in critical_info
+        ).model_dump()
 
 
-def process_ehr_file(filepath: Path) -> str:
-    """Analyze EHR record using the medical model."""
+def clean_llm_json_output(result_text: str) -> str:
+    """
+    Clean raw LLM output into parseable JSON string.
+    
+    Steps:
+    1. Remove markdown code fences (```json ... ```)
+    2. Truncate at the last complete string entry
+    3. Remove trailing comma, close unclosed array and object
+    
+    Args:
+        result_text: Raw text output from the LLM
+        
+    Returns:
+        Cleaned JSON string ready for parsing
+    """
+    cleaned = result_text.strip()
+    
+    # 1. Remove markdown fence properly (substring, not chars)
+    if cleaned.startswith("```json"):
+        cleaned = cleaned[7:]
+    if cleaned.endswith("```"):
+        cleaned = cleaned[:-3]
+    
+    # 2. Truncate at the last complete string entry
+    last_quote = cleaned.rfind('"')
+    if last_quote > 0:
+        cleaned = cleaned[:last_quote + 1]
+    
+    # 3. Remove trailing comma, then close the array and object
+    cleaned = cleaned.rstrip().rstrip(',') + ']}'
+    
+    return cleaned
+
+
+def process_ehr_file(filepath: Path) -> Union[PatientRecord, dict]:
+    """Analyze EHR record and extract into PatientRecord Pydantic format."""
     pipe = get_pipeline()
     
     log.info(f"Loading EHR record: {filepath}")
     record_text = filepath.read_text()
 
-    prompt = "Summarize the patient's medical history and current condition based on this EHR record."
+    prompt = """Extract and structure this EHR record into JSON format with these fields:
+    - patient_id: string
+    - name: string  
+    - symptoms: list of symptom strings
+    - diagnoses: list of diagnosis strings
+    - medications: list of medication strings   
+    - critical_info: list of critical information strings
+    
+    Return ONLY valid JSON, no other text."""
     log.info("Analyzing EHR with model...")
 
     messages = [
@@ -225,10 +476,59 @@ def process_ehr_file(filepath: Path) -> str:
     ]
 
     output = pipe(text=messages, max_new_tokens=2000)
-    result = output[0]["generated_text"][-1]["content"]
-
-    log.info("EHR analysis complete.")
-    return result
+    result_text = output[0]["generated_text"][-1]["content"]
+    log.debug(f"Raw model output: {result_text}...")
+    
+    cleaned = clean_llm_json_output(result_text)
+    print("Cleaned JSON text for parsing:", cleaned)
+    
+    log.info("EHR analysis complete. Parsing into PatientRecord format...")
+    
+    try:
+        # Parse JSON output from model using robust parser
+        result_data = json.loads(cleaned)
+        
+        if not result_data:
+            raise ValueError("JSON parsing returned empty dict")
+        
+        # Deduplicate critical_info to remove repetitive entries
+        critical_info = result_data.get("critical_info", [])
+        if critical_info:
+            critical_info = deduplicate_critical_info(critical_info)
+            result_data["critical_info"] = critical_info
+        
+        # Validate and create PatientRecord
+        patient_record = PatientRecord(
+            patient_id=result_data.get("patient_id", "UNKNOWN"),
+            name=result_data.get("name", ""),
+            symptoms=result_data.get("symptoms", []),
+            diagnoses=result_data.get("diagnoses", []),
+            medications=result_data.get("medications", []),
+            critical_info=critical_info
+        )
+        log.info(f"✓ Created PatientRecord for {patient_record.patient_id}")
+        log.info(f"  - Symptoms: {len(patient_record.symptoms)}")
+        log.info(f"  - Diagnoses: {len(patient_record.diagnoses)}")
+        log.info(f"  - Medications: {len(patient_record.medications)}")
+        log.info(f"  - Critical Info: {len(patient_record.critical_info)} (deduplicated)")
+        
+        # Save to JSON file
+        result_dict = patient_record.model_dump()
+        save_patient_record_to_json(result_dict, f"{patient_record.patient_id}_ehr.json")
+        
+        return result_dict
+        
+    except (json.JSONDecodeError, ValueError) as e:
+        log.warning(f"Failed to parse model output as JSON: {e}. Attempting fallback extraction...")
+        # Fallback: create empty record if parsing fails
+        return PatientRecord(
+            patient_id="UNKNOWN",
+            name="",
+            symptoms=[],
+            diagnoses=[],
+            medications=[],
+            critical_info=[result_text]  # Store raw result in critical_info
+        ).model_dump()
 
 
 def should_continue_processing(state: dict) -> str:

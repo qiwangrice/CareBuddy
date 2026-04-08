@@ -135,14 +135,16 @@ async def process_files():
         results_file = OUTPUT_DIR / "results.json"
         if results_file.exists():
             results_data = json.loads(results_file.read_text())
-            processing_state["total_files"] = results_data["total_files"]
-            processing_state["processed_files"] = results_data["processed_files"]
+            processing_state["total_files"] = results_data.get("total_files", 0)
+            processing_state["processed_files"] = results_data.get("processed_files", 0)
             
-            # Extract results
-            for filename, result in results_data.get("results", {}).items():
+            # Extract results - key is "detailed_results" in results.json
+            for filename, result in results_data.get("detailed_results", {}).items():
+                # Convert dict results to JSON string for AnalysisResult model
+                result_str = json.dumps(result, indent=2) if isinstance(result, dict) else str(result)
                 processing_state["results"].append({
                     "filename": filename,
-                    "result": result,
+                    "result": result_str,
                     "status": "success"
                 })
         

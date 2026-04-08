@@ -40,7 +40,7 @@ def summarize_results(state: dict) -> dict:
 
     summarize_results = ""
 
-    for filename, result in summary_data["results"].items():
+    for filename, result in summary_data.get("detailed_results", {}).items():
         
         # Truncate long results for readability
         if isinstance(result, dict):

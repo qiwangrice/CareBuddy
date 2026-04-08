@@ -1,15 +1,15 @@
 ---
-name: clinical history 2026-02-22_21-05-43
-description: The patient, a 20-year-old male with a history of Whipple procedure for low-grade pancreatic neoplasm, currently manages pancreatic insufficiency and type 1 diabetes, and has a cyst identified on CT scan, requiring ongoing monitoring.
+name: clinical history 2026-04-07_23-51-46
+description: The processed files highlight patients with significant histories of pancreatic surgery and disease, presenting with symptoms potentially related to complications like pancreatitis, strictures, or recurrence, alongside specific imaging findings requiring further investigation.
 ---
 
 ## Processing Metadata
-- **Generated**: 2026-02-22 21:05:43
-- **Archive Folder**: 2026-02-22_21-05-43
+- **Generated**: 2026-04-07 23:51:46
+- **Archive Folder**: 2026-04-07_23-51-46
 
 ## Processing Statistics
-- **Total Files**: 4
-- **Successfully Processed**: 4
+- **Total Files**: 2
+- **Successfully Processed**: 2
 - **Success Rate**: 100.0%
 
 ## System Information

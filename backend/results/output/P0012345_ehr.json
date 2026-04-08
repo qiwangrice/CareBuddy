@@ -1,0 +1,29 @@
+{
+  "patient_id": "P0012345",
+  "name": "Mr. John Doe",
+  "symptoms": [
+    "Tinnitus",
+    "Epigastric pain",
+    "Abdominal pain (low abdomen, crampy, 4 hours duration, resolved)"
+  ],
+  "diagnoses": [
+    "Mucinous neoplasm of the pancreas",
+    "Secondary pancreatitis",
+    "Bile duct stricture",
+    "Insulin-dependent diabetes mellitus",
+    "Tinnitus"
+  ],
+  "medications": [
+    "Pancreatic enzyme replacement",
+    "Insulin"
+  ],
+  "critical_info": [
+    "History of Whipple procedure (pancreatectomy and splenectomy)",
+    "History of low-grade pancreatic neoplasm",
+    "History of bile duct stricture requiring reconstruction",
+    "History of high CA 19-9",
+    "History of epigastric pain prompting contrast CT",
+    "History of abdominal pain (low abdomen, crampy, 4 hours duration, resolved)",
+    "History of HIB, Meningovax, Pneumovax, flu shot"
+  ]
+}
