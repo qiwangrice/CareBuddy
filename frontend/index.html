@@ -251,12 +251,103 @@
             padding-bottom: 10px;
         }
 
-        .summary-content {
+        .report-sections {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .report-section {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            border-left: 4px solid #667eea;
+        }
+
+        .report-section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .report-section.summary {
+            border-left-color: #667eea;
+        }
+
+        .report-section.diagnoses {
+            border-left-color: #e74c3c;
+        }
+
+        .report-section.concern {
+            border-left-color: #f39c12;
+        }
+
+        .report-section.recommendation {
+            border-left-color: #27ae60;
+        }
+
+        .report-content {
             color: #555;
             line-height: 1.8;
-            white-space: pre-wrap;
-            word-break: break-word;
+            font-size: 0.95em;
         }
+
+        .diagnosis-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .diagnosis-item {
+            background: #f8f9ff;
+            padding: 12px 15px;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+            word-wrap: break-word;
+            font-size: 0.9em;
+        }
+
+        .diagnosis-item.high-confidence {
+            border-left-color: #27ae60;
+            background: #ecf8f3;
+        }
+
+        .diagnosis-item.uncertain {
+            border-left-color: #f39c12;
+            background: #fef5e7;
+        }
+
+        .diagnosis-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .badge-high {
+            background: #27ae60;
+            color: white;
+        }
+
+        .badge-uncertain {
+            background: #f39c12;
+            color: white;
+        }
+
+        .empty-state {
+            color: #999;
+            font-style: italic;
+            padding: 20px;
+            text-align: center;
+        }
+
 
         .download-buttons {
             display: flex;
@@ -504,38 +595,19 @@
 
         async function fetchAndDisplayReport() {
             try {
-                // Try to fetch from dedicated content endpoint first
-                let reportContent = null;
+                const reportResponse = await fetch(`${API_BASE}/reports/analysis/content`);
                 
-                try {
-                    const reportResponse = await fetch(`${API_BASE}/reports/analysis/content`);
-                    if (reportResponse.ok) {
-                        const reportData = await reportResponse.json();
-                        reportContent = reportData.content;
-                        log.info(`Fetched report: ${reportData.length} bytes`);
-                    }
-                } catch (e) {
-                    // Fallback to status endpoint
-                    const statusResponse = await fetch(`${API_BASE}/status`);
-                    const statusData = await statusResponse.json();
-                    reportContent = statusData.summary_report;
+                if (!reportResponse.ok) {
+                    showStatus('Report not available yet', 'error');
+                    return;
                 }
+
+                const reportData = await reportResponse.json();
                 
-                // Display analysis report in results section
-                if (reportContent) {
-                    const container = document.getElementById('resultsContainer');
-                    container.innerHTML = `
-                        <div class="result-item" style="border-left: 4px solid #667eea; background: #f8f9ff;">
-                            <h3>📑 Analysis Report</h3>
-                            <div class="result-content" style="white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 0.95em;">
-                                ${escapeHtml(reportContent)}
-                            </div>
-                        </div>
-                    `;
-                    showStatus('Analysis report loaded successfully', 'success');
-                } else {
-                    showStatus('Report not ready yet', 'error');
-                }
+                // Display analysis report with separate sections
+                displayAnalysisReport(reportData);
+                
+                showStatus('Analysis report loaded successfully', 'success');
                 
                 // Show summary section
                 document.getElementById('summarySection').style.display = 'block';
@@ -543,6 +615,95 @@
                 console.error('Error fetching report:', error);
                 showStatus(`Error loading report: ${error.message}`, 'error');
             }
+        }
+
+        function displayAnalysisReport(data) {
+            const container = document.getElementById('resultsContainer');
+            
+            let html = '<div class="report-sections">';
+            
+            // Summary Section
+            if (data.summary) {
+                html += `
+                    <div class="report-section summary">
+                        <h3>📋 Summary</h3>
+                        <div class="report-content">${escapeHtml(data.summary)}</div>
+                    </div>
+                `;
+            }
+            
+            // High Confidence Diagnosis Section
+            html += '<div class="report-section diagnoses">';
+            html += '<h3>✅ High Confidence Diagnoses</h3>';
+            if (data.high_confidence_diagnosis && data.high_confidence_diagnosis.length > 0) {
+                html += '<div class="diagnosis-list">';
+                data.high_confidence_diagnosis.forEach(diagnosis => {
+                    html += `
+                        <div class="diagnosis-item high-confidence">
+                            <span class="diagnosis-badge badge-high">HIGH</span>
+                            ${escapeHtml(diagnosis)}
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            } else {
+                html += '<div class="empty-state">No high confidence diagnoses found</div>';
+            }
+            html += '</div>';
+            
+            // Diagnosis with Uncertainty Section
+            html += '<div class="report-section diagnoses">';
+            html += '<h3>⚠️ Diagnoses with Uncertainty</h3>';
+            if (data.diagnosis_with_uncertainty && data.diagnosis_with_uncertainty.length > 0) {
+                html += '<div class="diagnosis-list">';
+                data.diagnosis_with_uncertainty.forEach(diagnosis => {
+                    html += `
+                        <div class="diagnosis-item uncertain">
+                            <span class="diagnosis-badge badge-uncertain">UNCERTAIN</span>
+                            ${escapeHtml(diagnosis)}
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            } else {
+                html += '<div class="empty-state">No diagnoses with uncertainty found</div>';
+            }
+            html += '</div>';
+            
+            // Concern Section
+            if (data.concern) {
+                html += `
+                    <div class="report-section concern">
+                        <h3>🚨 Concerns</h3>
+                        <div class="report-content">${escapeHtml(data.concern)}</div>
+                    </div>
+                `;
+            }
+            
+            // Recommendation Section
+            if (data.recommendation) {
+                html += `
+                    <div class="report-section recommendation">
+                        <h3>💡 Recommendations</h3>
+                        <div class="report-content">${escapeHtml(data.recommendation)}</div>
+                    </div>
+                `;
+            }
+            
+            // Symptoms Section (if available)
+            if (data.symptoms && data.symptoms.length > 0) {
+                html += '<div class="report-section">';
+                html += '<h3>🔍 Identified Symptoms</h3>';
+                html += '<div class="diagnosis-list">';
+                data.symptoms.forEach(symptom => {
+                    html += `<div class="diagnosis-item">${escapeHtml(symptom)}</div>`;
+                });
+                html += '</div></div>';
+            }
+            
+            html += '</div>';
+            
+            container.innerHTML = html;
         }
 
         function updateStats(total, processed) {

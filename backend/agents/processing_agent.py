@@ -193,7 +193,15 @@ def process_file_worker(state: dict) -> dict:
                 # Process image
                 result = process_image_file(filepath)
             else:
-                result = f"Unsupported file type: {file_ext}"
+                result = {
+                    "patient_id": "UNKNOWN",
+                    "name": "Unsupported File Type",
+                    "error": f"Unsupported file type: {file_ext}",
+                    "symptoms": [],
+                    "diagnoses": [],
+                    "medications": [],
+                    "critical_info": []
+                }
 
         state["file_results"][item] = result
         log.info(f"✓ Completed: {item}")
@@ -201,7 +209,15 @@ def process_file_worker(state: dict) -> dict:
     except Exception as e:
         error_msg = f"Error processing {item}: {str(e)}"
         log.error(error_msg)
-        state["file_results"][item] = error_msg
+        state["file_results"][item] = {
+            "patient_id": "UNKNOWN",
+            "name": "Processing Error",
+            "error": error_msg,
+            "symptoms": [],
+            "diagnoses": [],
+            "medications": [],
+            "critical_info": []
+        }
 
     # Move to next item
     state["current_file_index"] += 1
@@ -219,7 +235,7 @@ def process_archive_folder(archive_name: str) -> str:
     Decision logic:
     1. Always read SKILL.md first (lightweight, has key stats)
     2. If success_rate < 100%, read analysis_report.txt for context
-    3. Only read results.json if detailed per-file info is needed
+    3. Only read patient_records_summary.json if detailed per-file info is needed
     4. Generate insights using the compiled information
     """
     archive_path = OUTPUT_DIR / archive_name
@@ -230,7 +246,7 @@ def process_archive_folder(archive_name: str) -> str:
     
     skill_file = archive_path / "SKILL.md"
     report_file = archive_path / "analysis_report.txt"
-    results_file = archive_path / "results.json"
+    results_file = archive_path / "patient_records_summary.json"
     
     # STEP 1: Always parse SKILL.md first
     log.info(f"Reading SKILL.md for archive: {archive_name}")
@@ -266,11 +282,11 @@ def process_archive_folder(archive_name: str) -> str:
         log.info(f"Success rate is {metadata.success_rate:.1f}% (100%), skipping detailed report")
         archive_info += "Note: All files processed successfully. Detailed report skipped.\n\n"
     
-    # STEP 3: Only read results.json if we need detailed information (TODO: define criteria for when detailed results are needed, e.g. if total_files > 3 or if there were any failures)
+    # STEP 3: Only read patient_records_summary.json if we need detailed information (TODO: define criteria for when detailed results are needed, e.g. if total_files > 3 or if there were any failures)
     need_detailed_results = metadata.total_files > 3 or metadata.success_rate < 100.0
     
     if need_detailed_results:
-        log.info(f"Reading results.json for detailed analysis (total_files={metadata.total_files}, success_rate={metadata.success_rate:.1f}%)")
+        log.info(f"Reading patient_records_summary.json for detailed analysis (total_files={metadata.total_files}, success_rate={metadata.success_rate:.1f}%)")
         if results_file.exists():
             try:
                 results_data = json.loads(results_file.read_text())
@@ -285,11 +301,11 @@ def process_archive_folder(archive_name: str) -> str:
                 else:
                     archive_info += "  No detailed results available\n"
             except Exception as e:
-                log.warning(f"Could not read results.json: {e}")
+                log.warning(f"Could not read patient_records_summary.json: {e}")
         else:
-            log.warning(f"Results file not found for archive: {archive_name}")
+            log.warning(f"Patient records summary file not found for archive: {archive_name}")
     else:
-        log.info("Skipping detailed results.json (small number of files and 100% success rate)")
+        log.info("Skipping patient_records_summary.json (small number of files and 100% success rate)")
     
     archive_info += "\n"
     

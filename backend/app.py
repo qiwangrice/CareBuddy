@@ -132,13 +132,13 @@ async def process_files():
         final_state = run_orchestrator()
         
         # Parse results
-        results_file = OUTPUT_DIR / "results.json"
+        results_file = OUTPUT_DIR / "patient_records_summary.json"
         if results_file.exists():
             results_data = json.loads(results_file.read_text())
             processing_state["total_files"] = results_data.get("total_files", 0)
             processing_state["processed_files"] = results_data.get("processed_files", 0)
             
-            # Extract results - key is "detailed_results" in results.json
+            # Extract results - key is "detailed_results" in patient_records_summary.json
             for filename, result in results_data.get("detailed_results", {}).items():
                 # Convert dict results to JSON string for AnalysisResult model
                 result_str = json.dumps(result, indent=2) if isinstance(result, dict) else str(result)
@@ -167,7 +167,7 @@ async def process_files():
 async def get_status():
     """Get current processing status."""
     report = None
-    report_file = OUTPUT_DIR / "analysis_report.txt"
+    report_file = OUTPUT_DIR / "analysis_report.json"
     if report_file.exists():
         report = report_file.read_text()
     
@@ -200,49 +200,93 @@ async def get_result(filename: str):
 
 @app.get("/reports/analysis")
 async def get_analysis_report():
-    """Download the analysis report."""
-    report_file = OUTPUT_DIR / "analysis_report.txt"
-    if not report_file.exists():
-        raise HTTPException(status_code=404, detail="Report not available yet")
+    """Download the analysis report as text or JSON."""
+    # Try JSON first, then fall back to txt
+    report_json = OUTPUT_DIR / "analysis_report.json"
+    report_txt = OUTPUT_DIR / "analysis_report.txt"
     
-    return FileResponse(
-        report_file,
-        media_type="text/plain",
-        filename="analysis_report.txt"
-    )
+    if report_json.exists():
+        # Convert JSON to readable text format
+        content = json.loads(report_json.read_text())
+        
+        # Format the report as plain text
+        text_report = f"""COMPREHENSIVE ANALYSIS REPORT
+{'='*50}
+
+SUMMARY
+{'-'*50}
+{content.get('summary', 'Not available')}
+
+HIGH CONFIDENCE DIAGNOSES
+{'-'*50}
+{json.dumps(content.get('high_confidence_diagnosis', []), indent=2) if content.get('high_confidence_diagnosis') else 'None identified'}
+
+DIAGNOSES WITH UNCERTAINTY
+{'-'*50}
+{json.dumps(content.get('diagnosis_with_uncertainty', []), indent=2) if content.get('diagnosis_with_uncertainty') else 'None identified'}
+
+SYMPTOMS
+{'-'*50}
+{json.dumps(content.get('symptoms', []), indent=2) if content.get('symptoms') else 'None identified'}
+
+CONCERNS
+{'-'*50}
+{content.get('concern', 'Not available')}
+
+RECOMMENDATIONS
+{'-'*50}
+{content.get('recommendation', 'Not available')}
+"""
+        return {
+            "status": "success",
+            "content": text_report,
+            "filename": "analysis_report.txt"
+        }
+    elif report_txt.exists():
+        return FileResponse(
+            report_txt,
+            media_type="text/plain",
+            filename="analysis_report.txt"
+        )
+    else:
+        raise HTTPException(status_code=404, detail="Report not available yet")
 
 
 @app.get("/reports/analysis/content")
 async def get_analysis_report_content():
-    """Get the analysis report content as JSON."""
-    report_file = OUTPUT_DIR / "analysis_report.txt"
+    """Get the analysis report content as JSON with all sections."""
+    report_file = OUTPUT_DIR / "analysis_report.json"
     if not report_file.exists():
         raise HTTPException(status_code=404, detail="Report not available yet")
     
-    content = report_file.read_text()
+    content = json.loads(report_file.read_text())
     log.info("Retrieved analysis report content")
 
-    log.info(content[:500] + "..." if len(content) > 500 else content)
+    log.info(json.dumps(content, indent=2)[:500] + "..." if len(json.dumps(content, indent=2)) > 500 else json.dumps(content, indent=2))
     
     return {
         "status": "success",
-        "filename": "analysis_report.txt",
-        "content": content,
-        "length": len(content)
+        "filename": "analysis_report.json",
+        "summary": content.get('summary', ''),
+        "high_confidence_diagnosis": content.get('high_confidence_diagnosis', []),
+        "diagnosis_with_uncertainty": content.get('diagnosis_with_uncertainty', []),
+        "concern": content.get('concern', ''),
+        "recommendation": content.get('recommendation', ''),
+        "symptoms": content.get('symptoms', [])
     }
 
 
-@app.get("/reports/results.json")
-async def get_results_json():
-    """Download the results JSON."""
-    results_file = OUTPUT_DIR / "results.json"
-    if not results_file.exists():
-        raise HTTPException(status_code=404, detail="Results not available yet")
+@app.get("/reports/patient_records_summary.json")
+async def get_patient_records_summary_json():
+    """Download the patient records summary JSON."""
+    summary_file = OUTPUT_DIR / "patient_records_summary.json"
+    if not summary_file.exists():
+        raise HTTPException(status_code=404, detail="Patient records summary not available yet")
     
     return FileResponse(
-        results_file,
+        summary_file,
         media_type="application/json",
-        filename="results.json"
+        filename="patient_records_summary.json"
     )
 
 

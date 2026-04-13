@@ -1,0 +1,16 @@
+{
+  "patient_id": "IMAGE_Abdomen_CT_Scan_001",
+  "name": "Abdomen CT Scan Analysis",
+  "symptoms": [
+    "No specific symptoms mentioned in the image description."
+  ],
+  "diagnoses": [
+    "No specific diagnoses mentioned in the image description."
+  ],
+  "medications": [
+    "No specific medications mentioned in the image description."
+  ],
+  "critical_info": [
+    "The image shows a CT scan of the abdomen. The liver, spleen, kidneys, and other abdominal organs appear normal in size and shape. There are no obvious signs of inflammation or infection. The bowel loops are unremarkable. The aorta and major blood vessels are normal in appearance. No significant abnormalities are identified in the image."
+  ]
+}

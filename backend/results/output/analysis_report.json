@@ -1,0 +1,22 @@
+{
+  "summary": "Based on the provided analysis results, here is a brief summary:\n\nThe analysis processed two files, extracting a total of four symptoms and seven diagnoses. The key associations identified are between \"Abdominal pain (low abdomen, crampy, 4 hours duration, resolved)\" and \"Lassa fever\". Notably, the patient's EHR record indicates a history of Whipple procedure, pancreatic neoplasm, bile duct stricture, and diabetes, alongside epigastric pain and abdominal pain. The CT scan analysis revealed no significant abnormalities in the abdominal organs. While several diagnoses were extracted, the validation process found no direct matches for \"Tinnitus\" or \"diagnosis mention image description\" within the knowledge graph, raising concerns. The consensus score is low, indicating a lack of high-confidence diagnoses, and several diagnoses, including \"Lassa fever\" and \"annular pancreas,\" are flagged as potentially concerning.",
+  "key_insights": "Based on the provided EHR data, Mr. John Doe presents with a history of several significant conditions including a Whipple procedure, low-grade pancreatic neoplasm, bile duct stricture, and insulin-dependent diabetes. His current symptoms include tinnitus and epigastric/abdominal pain, which have resolved. The CT scan shows no acute abnormalities in the abdomen, although the patient has a history of pancreatic issues.",
+  "concern": "Based on the provided analysis, there are several potential concerns. Annular pancreas, pancreatitis, and anorectal stricture are flagged as potential diagnoses with high concern scores. Diabetes mellitus is also noted as a concern. Additionally, the presence of Tinnitus and \"diagnosis mention image description\" as concerns warrants further investigation, although the reasons for these concerns are not specified. Lassa fever is also flagged as a concern.",
+  "recommendation": "Based on the analysis, I recommend further investigation into the potential concerning diagnoses, particularly Lassa fever and annular pancreas, given the low consensus score. Additionally, I need to clarify the significance of the tinnitus symptom and the image description mentioned in the analysis, as they lack direct validation. Further evaluation of the patient's history and potential exposures is warranted.",
+  "symptoms": [
+    "Abdominal pain (low abdomen, crampy, 4 hours duration, resolved)",
+    "No specific symptoms mentioned in the image description.",
+    "Tinnitus",
+    "Epigastric pain"
+  ],
+  "high_confidence_diagnosis": [],
+  "diagnosis_with_uncertainty": [
+    "annular pancreas",
+    "pancreatitis",
+    "anorectal stricture",
+    "diabetes mellitus",
+    "Tinnitus",
+    "diagnosis mention image description",
+    "Lassa fever"
+  ]
+}
